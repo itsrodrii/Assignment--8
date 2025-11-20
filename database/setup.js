@@ -1,14 +1,33 @@
 const { Sequelize, DataTypes } = require('sequelize');
 require('dotenv').config();
 
-// Create Sequelize instance
 const db = new Sequelize({
   dialect: 'sqlite',
   storage: `database/${process.env.DB_NAME}` || 'database/task_management.db',
   logging: console.log
 });
 
-// Define Project model
+const User = db.define('User', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    username: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    },
+    password: {
+        type: DataTypes.STRING,
+        allowNull: false
+    }
+});
+
 const Project = db.define('Project', {
     id: {
         type: DataTypes.INTEGER,
@@ -35,7 +54,6 @@ const Project = db.define('Project', {
     }
 });
 
-// Define Task model
 const Task = db.define('Task', {
     id: {
         type: DataTypes.INTEGER,
@@ -66,10 +84,14 @@ const Task = db.define('Task', {
     }
 });
 
-// Export for use in other files
-module.exports = { db, Project, Task };
+User.hasMany(Project, { foreignKey: 'userId' });
+Project.belongsTo(User, { foreignKey: 'userId' });
 
-// Create database and tables
+Project.hasMany(Task, { foreignKey: 'projectId' });
+Task.belongsTo(Project, { foreignKey: 'projectId' });
+
+module.exports = { db, User, Project, Task };
+
 async function setupDatabase() {
     try {
         await db.authenticate();
@@ -84,7 +106,6 @@ async function setupDatabase() {
     }
 }
 
-// Run setup if this file is executed directly
 if (require.main === module) {
     setupDatabase();
 }
